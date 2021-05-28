@@ -20,6 +20,7 @@ func main() {
 			_, _ = fmt.Fprintf(os.Stderr, "fetch_post: %v\n", err)
 			os.Exit(1)
 		}
+		fmt.Printf("Http Status Code: %s\n", res.Status)
 		_, err = io.Copy(os.Stdout, res.Body)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stdout, "fetch_post: reading %s: %v\n", url, err)
