@@ -24,11 +24,6 @@ var (
 // 调色板
 var palette = []color.Color{color.White, red, green, blue, pink, color.Black, gold}
 
-const (
-	whiteIndex = 0
-	blackIndex = 1
-)
-
 func main() {
 	// The sequence of images is deterministic unless we seed
 	// the pseudo-random number generator using the current time.
