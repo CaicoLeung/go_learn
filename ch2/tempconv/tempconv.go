@@ -14,4 +14,4 @@ const (
 /* Celsius类型的参数c出现在了函数名的前面，表示声明的是Celsius类型的一个名叫String的方法，该方法返回该类型对象c带着°C温度单位的字符串 */
 func (c Celsius) String() string { return fmt.Sprintf("%g °C", c) }
 
-func (f Fahrenheit) String() string { return fmt.Sprintf("%g °C", f) }
+func (f Fahrenheit) String() string { return fmt.Sprintf("%g °F", f) }
