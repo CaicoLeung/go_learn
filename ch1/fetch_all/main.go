@@ -6,19 +6,33 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sort"
 	"time"
 )
 
 func main() {
+	total := 0 // 请求的总次数
 	start := time.Now()
-	ch := make(chan string) // make函数创建了一个传递string类型参数的channel
+	ch := make(chan map[string]string) // make函数创建了一个传递string类型参数的channel
 	for _, url := range os.Args[1:] {
+		fmt.Printf("Start fetch %v\n", url)
 		go fetch(url, ch) // start a goroutine
+		go fetch(url, ch) // start a goroutine
+		total += 2
 	}
-	for range os.Args[1:] {
-		fmt.Println(<-ch) // 从ch channel receive
+	result := make(map[string]string)
+	var keys []string
+	for i := 0; i < total; i++ {
+		for k, v := range <-ch {
+			result[k] = v
+			keys = append(keys, k)
+		}
 	}
-	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Printf("%s: %s\n", key, result[key])
+	}
+	fmt.Printf("done, use %v seconds", time.Since(start).Seconds())
 }
 
 /*
@@ -27,18 +41,22 @@ func main() {
 在这个例子中，每一个fetch函数在执行时都会往channel里发送一个值（ch <- expression），主函数负责接收这些值（<-ch）。
 这个程序中我们用main函数来接收所有fetch函数传回的字符串，可以避免在goroutine异步执行还没有完成时main函数提前退出。
 */
-func fetch(url string, ch chan<- string) {
+func fetch(url string, ch chan<- map[string]string) {
 	start := time.Now()
 	res, err := http.Get(url)
+	result := make(map[string]string)
 	if err != nil {
-		ch <- fmt.Sprint(err) // send至ch channel
+		result[url] = fmt.Sprintf("http-get: %v\n", err) // send至ch channel
+		ch <- result
 		return
 	}
 	nbytes, err := io.Copy(ioutil.Discard, res.Body) // 可以把ioutil.Discard这个变量看作一个垃圾桶，可以向里面写一些不需要的数据
 	if err != nil {
-		ch <- fmt.Sprintf("While reading %s: %v\n", url, err)
+		result[url] = fmt.Sprintf("While reading %s: %v\n", url, err)
+		ch <- result
 		return
 	}
 	secs := time.Since(start).Seconds()
-	ch <- fmt.Sprintf("%.2fs %7d %s", secs, nbytes, url)
+	result[url] = fmt.Sprintf("%v %v %v Bytes %v", url, res.Status, nbytes, secs)
+	ch <- result
 }
